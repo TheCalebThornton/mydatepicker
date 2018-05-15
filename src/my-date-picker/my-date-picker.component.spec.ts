@@ -318,6 +318,59 @@ describe('MyDatePicker', () => {
         expect(yearLabel.nativeElement.textContent).toBe('2017');
     });
 
+    it('selecting previous year with DisableUntil option displays earliest valid month', () => {
+        comp.selectedMonth = {monthTxt: '', monthNbr: 5, year: 2016};
+        comp.options = {
+            disableUntil: {year: 2015, month: 10, day: 13},
+        };
+
+        fixture.detectChanges();
+        let btnpicker = getElement('.btnpicker');
+        btnpicker.nativeElement.click();
+
+        comp.parseOptions();
+
+        fixture.detectChanges();
+        let prevyear = getElement(PREVYEAR);
+        expect(prevyear).not.toBe(null);
+
+        prevyear.nativeElement.click();
+        fixture.detectChanges();
+        let yearLabel = getElement('.headeryeartxt .headerlabelbtn');
+        expect(yearLabel).not.toBe(null);
+        expect(yearLabel.nativeElement.textContent).toBe('2015');
+        let monthLabel = getElement('.headermonthtxt .headerlabelbtn');
+        expect(monthLabel).not.toBe(null);
+        expect(monthLabel.nativeElement.textContent).toBe('Oct');
+    });
+
+    it('selecting next year with DisableSince option displays latest valid month', () => {
+        comp.selectedMonth = {monthTxt: '', monthNbr: 5, year: 2016};
+        comp.options = {
+            disableSince: {year: 2017, month: 1, day: 20},
+        };
+
+        fixture.detectChanges();
+        let btnpicker = getElement('.btnpicker');
+        btnpicker.nativeElement.click();
+
+        comp.parseOptions();
+
+        fixture.detectChanges();
+        let nextyear = getElement(NEXTYEAR);
+        expect(nextyear).not.toBe(null);
+
+        nextyear.nativeElement.click();
+
+        fixture.detectChanges();
+        let yearLabel = getElement('.headeryeartxt .headerlabelbtn');
+        expect(yearLabel).not.toBe(null);
+        expect(yearLabel.nativeElement.textContent).toBe('2017');
+        let monthLabel = getElement('.headermonthtxt .headerlabelbtn');
+        expect(monthLabel).not.toBe(null);
+        expect(monthLabel.nativeElement.textContent).toBe('Jan');
+    });
+
     it('test calendar year 2016 month one by one - next month button', () => {
         comp.selectedMonth = {monthTxt: '', monthNbr: 1, year: 2016};
 
@@ -973,7 +1026,7 @@ describe('MyDatePicker', () => {
         expect(headerbtndisabled).not.toBe(null);
     });
 
-    it('options - max year', () => {
+    fit('options - max year', () => {
         comp.selectedMonth = {monthTxt: 'May', monthNbr: 5, year: 2016};
         comp.options = {maxYear: 2017};
 

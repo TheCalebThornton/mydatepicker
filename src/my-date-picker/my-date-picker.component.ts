@@ -225,7 +225,14 @@ export class MyDatePicker implements OnChanges, ControlValueAccessor, OnDestroy 
 
     onYearCellClicked(cell: IMyCalendarYear): void {
         let yc: boolean = cell.year !== this.visibleMonth.year;
-        this.visibleMonth = {monthTxt: this.visibleMonth.monthTxt, monthNbr: this.visibleMonth.monthNbr, year: cell.year};
+        let month = this.visibleMonth.monthNbr;
+        if (cell.year < this.visibleMonth.year && this.opts.disableUntil) {
+            month = this.opts.disableUntil.month;
+        }
+        else if (cell.year > this.visibleMonth.year && this.opts.disableSince) {
+            month = this.opts.disableSince.month;
+        }
+        this.visibleMonth = {monthTxt: this.monthText(month), monthNbr: month, year: cell.year};
         this.generateCalendar(this.visibleMonth.monthNbr, cell.year, yc);
         this.selectYear = false;
         this.selectorEl.nativeElement.focus();
@@ -254,15 +261,15 @@ export class MyDatePicker implements OnChanges, ControlValueAccessor, OnDestroy 
         for (let i = year; i <= 20 + year; i += 5) {
             let row: Array<IMyCalendarYear> = [];
             for (let j = i; j < i + 5; j++) {
-                let disabled: boolean = this.utilService.isMonthDisabledByDisableUntil({year: j, month: this.visibleMonth.monthNbr, day: this.daysInMonth(this.visibleMonth.monthNbr, j)}, this.opts.disableUntil)
-                 || this.utilService.isMonthDisabledByDisableSince({year: j, month: this.visibleMonth.monthNbr, day: 1}, this.opts.disableSince);
+                let disabled: boolean = this.utilService.isMonthDisabledByDisableUntil({year: j, month: this.opts.disableUntil.month, day: this.daysInMonth(this.opts.disableUntil.month, j)}, this.opts.disableUntil)
+                    || this.utilService.isMonthDisabledByDisableSince({year: j, month: this.opts.disableSince.month, day: 1}, this.opts.disableSince);
                 let minMax: boolean = j < this.opts.minYear || j > this.opts.maxYear;
                 row.push({year: j, currYear: j === today.year, selected: j === this.visibleMonth.year, disabled: disabled || minMax});
             }
             this.years.push(row);
         }
-        this.prevYearsDisabled = this.years[0][0].year <= this.opts.minYear || this.utilService.isMonthDisabledByDisableUntil({year: this.years[0][0].year - 1, month: this.visibleMonth.monthNbr, day: this.daysInMonth(this.visibleMonth.monthNbr, this.years[0][0].year - 1)}, this.opts.disableUntil);
-        this.nextYearsDisabled = this.years[4][4].year >= this.opts.maxYear || this.utilService.isMonthDisabledByDisableSince({year: this.years[4][4].year + 1, month: this.visibleMonth.monthNbr, day: 1}, this.opts.disableSince);
+        this.prevYearsDisabled = this.years[0][0].year <= this.opts.minYear || this.utilService.isMonthDisabledByDisableUntil({year: this.years[0][0].year - 1, month: this.opts.disableUntil.month, day: this.daysInMonth(this.opts.disableUntil.month, this.years[0][0].year - 1)}, this.opts.disableUntil);
+        this.nextYearsDisabled = this.years[4][4].year >= this.opts.maxYear || this.utilService.isMonthDisabledByDisableSince({year: this.years[4][4].year + 1, month: this.opts.disableSince.month, day: 1}, this.opts.disableSince);
     }
 
     onUserDateInput(value: string): void {
@@ -542,14 +549,16 @@ export class MyDatePicker implements OnChanges, ControlValueAccessor, OnDestroy 
 
     onPrevYear(): void {
         // Previous year from calendar
-        this.visibleMonth.year--;
-        this.generateCalendar(this.visibleMonth.monthNbr, this.visibleMonth.year, true);
+        let month = this.opts.disableUntil ? this.opts.disableUntil.month : this.visibleMonth.monthNbr;
+        this.visibleMonth = {monthTxt: this.monthText(month), monthNbr: month, year: this.visibleMonth.year - 1};
+        this.generateCalendar(month, this.visibleMonth.year, true);
     }
 
     onNextYear(): void {
         // Next year from calendar
-        this.visibleMonth.year++;
-        this.generateCalendar(this.visibleMonth.monthNbr, this.visibleMonth.year, true);
+        let month = this.opts.disableSince ? this.opts.disableSince.month : this.visibleMonth.monthNbr;
+        this.visibleMonth = {monthTxt: this.monthText(month), monthNbr: month, year: this.visibleMonth.year + 1};
+        this.generateCalendar(month, this.visibleMonth.year, true);
     }
 
     onTodayClicked(): void {
@@ -821,10 +830,12 @@ export class MyDatePicker implements OnChanges, ControlValueAccessor, OnDestroy 
         let dnm: boolean = false;
         let dny: boolean = false;
         if (this.opts.disableHeaderButtons) {
+            let disableSinceMonth = this.opts.disableSince.month;
+            let disableUntilMonth = this.opts.disableUntil.month;
             dpm = this.utilService.isMonthDisabledByDisableUntil({year: m === 1 ? y - 1 : y, month: m === 1 ? 12 : m - 1, day: this.daysInMonth(m === 1 ? 12 : m - 1, m === 1 ? y - 1 : y)}, this.opts.disableUntil);
-            dpy = this.utilService.isMonthDisabledByDisableUntil({year: y - 1, month: m, day: this.daysInMonth(m, y - 1)}, this.opts.disableUntil);
+            dpy = this.utilService.isMonthDisabledByDisableUntil({year: y - 1, month: disableUntilMonth, day: this.daysInMonth(disableUntilMonth, y - 1)}, this.opts.disableUntil);
             dnm = this.utilService.isMonthDisabledByDisableSince({year: m === 12 ? y + 1 : y, month: m === 12 ? 1 : m + 1, day: 1}, this.opts.disableSince);
-            dny = this.utilService.isMonthDisabledByDisableSince({year: y + 1, month: m, day: 1}, this.opts.disableSince);
+            dny = this.utilService.isMonthDisabledByDisableSince({year: y + 1, month: disableSinceMonth, day: 1}, this.opts.disableSince);
         }
         this.prevMonthDisabled = m === 1 && y === this.opts.minYear || dpm;
         this.prevYearDisabled = y - 1 < this.opts.minYear || dpy;
